@@ -80,7 +80,7 @@ const campaignTaskSchema = new mongoose.Schema(
 
 // Virtual: total completions count
 campaignTaskSchema.virtual('completionsCount').get(function () {
-  return this.completedBy.length;
+  return this.completedBy ? this.completedBy.length : 0;
 });
 
 // Check if a user has already completed this task
