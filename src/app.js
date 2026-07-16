@@ -25,6 +25,10 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/uploads', express.static('uploads'));
 
 // Routes
+app.get('/', (req, res) => {
+  res.send('TaskApp Backend is running! Access the API at /api');
+});
+
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/users', require('./routes/user.routes'));
 app.use('/api/tasks', require('./routes/task.routes'));
