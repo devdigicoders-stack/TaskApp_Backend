@@ -4,11 +4,12 @@ const User = require('../models/User');
 // @route   PUT /api/users/profile
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { name, upiId, upiQrCode } = req.body;
+    const { name, upiId, upiQrCode, avatar } = req.body;
     const updateData = {};
     if (name) updateData.name = name;
     if (upiId !== undefined) updateData.upiId = upiId;
     if (upiQrCode !== undefined) updateData.upiQrCode = upiQrCode;
+    if (avatar !== undefined) updateData.avatar = avatar;
 
     const user = await User.findByIdAndUpdate(req.user._id, updateData, { new: true });
 
