@@ -23,7 +23,7 @@ exports.getCampaigns = async (req, res, next) => {
 
     const result = campaigns.map((c) => {
       const obj = c.toObject();
-      obj.completionsCount = c.completedBy.length;
+      obj.completionsCount = c.completedBy ? c.completedBy.length : 0;
       obj.userCompleted = c.hasUserCompleted(req.user._id);
       obj.isExpired = c.isExpired();
       obj.userSubmissionStatus = submissionMap[c._id.toString()] || null;
@@ -54,7 +54,7 @@ exports.getCampaign = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Campaign task not found' });
 
     const obj = campaign.toObject();
-    obj.completionsCount = campaign.completedBy.length;
+    obj.completionsCount = campaign.completedBy ? campaign.completedBy.length : 0;
     obj.userCompleted = campaign.hasUserCompleted(req.user._id);
     obj.isExpired = campaign.isExpired();
 
@@ -105,7 +105,7 @@ exports.updateCampaign = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Campaign task not found' });
 
     const obj = campaign.toObject();
-    obj.completionsCount = campaign.completedBy.length;
+    obj.completionsCount = campaign.completedBy ? campaign.completedBy.length : 0;
     obj.isExpired = campaign.isExpired();
 
     res.json({ success: true, campaign: obj });
@@ -262,7 +262,7 @@ exports.getCampaignCompletions = async (req, res, next) => {
     res.json({
       success: true,
       completions: campaign.completedBy,
-      count: campaign.completedBy.length,
+      count: campaign.completedBy ? campaign.completedBy.length : 0,
     });
   } catch (error) {
     next(error);

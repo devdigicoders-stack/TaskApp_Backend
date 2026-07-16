@@ -85,6 +85,7 @@ campaignTaskSchema.virtual('completionsCount').get(function () {
 
 // Check if a user has already completed this task
 campaignTaskSchema.methods.hasUserCompleted = function (userId) {
+  if (!this.completedBy) return false;
   return this.completedBy.some((c) => c.user.toString() === userId.toString());
 };
 
