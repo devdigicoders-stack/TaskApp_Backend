@@ -1,20 +1,23 @@
-const admin = require('firebase-admin');
+const { initializeApp, getApps, cert } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
 
 // Initialize Firebase Admin SDK only once
-if (!admin.apps.length) {
+if (!getApps().length) {
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
     ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
     : null;
 
   if (serviceAccount) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+    initializeApp({
+      credential: cert(serviceAccount),
     });
   } else {
     console.warn('⚠️  FIREBASE_SERVICE_ACCOUNT_JSON not set — Google login will not work');
     // Initialize with empty app so require() doesn't crash
-    admin.initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID || 'placeholder' });
+    initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID || 'placeholder' });
   }
 }
 
-module.exports = admin;
+module.exports = {
+  auth: getAuth,
+};
