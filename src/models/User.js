@@ -52,6 +52,10 @@ const userSchema = new mongoose.Schema(
       type: String, // base64 encoded QR image or filename
       default: '',
     },
+    fcmToken: {
+      type: String,
+      default: '',
+    },
   },
   { timestamps: true }
 );

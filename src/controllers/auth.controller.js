@@ -17,7 +17,7 @@ exports.register = async (req, res, next) => {
     res.status(201).json({
       success: true,
       token,
-      user: { _id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role, fcmToken: user.fcmToken },
     });
   } catch (error) {
     next(error);
@@ -45,7 +45,7 @@ exports.login = async (req, res, next) => {
         role: user.role, coins: user.coins,
         upiId: user.upiId, upiQrCode: user.upiQrCode,
         isProfileComplete: user.isProfileComplete,
-        avatar: user.avatar,
+        avatar: user.avatar, fcmToken: user.fcmToken,
       },
     });
   } catch (error) {
@@ -100,7 +100,7 @@ exports.googleLogin = async (req, res, next) => {
         role: user.role, coins: user.coins,
         upiId: user.upiId, upiQrCode: user.upiQrCode,
         isProfileComplete: user.isProfileComplete,
-        avatar: user.avatar,
+        avatar: user.avatar, fcmToken: user.fcmToken,
       },
     });
   } catch (error) {
@@ -117,12 +117,12 @@ exports.getMe = async (req, res) => {
   const user = await User.findById(req.user._id);
   res.json({
     success: true,
-    user: {
+      user: {
       _id: user._id, name: user.name, email: user.email,
       role: user.role, coins: user.coins,
       upiId: user.upiId, upiQrCode: user.upiQrCode,
       isProfileComplete: user.isProfileComplete,
-      avatar: user.avatar,
+      avatar: user.avatar, fcmToken: user.fcmToken,
     },
   });
 };

@@ -1,5 +1,6 @@
 const Notification = require('../models/Notification');
 const User = require('../models/User');
+const { messaging } = require('../config/firebase');
 
 // @desc    Get user notifications (including global ones)
 // @route   GET /api/notifications
@@ -64,6 +65,40 @@ exports.createNotification = async (req, res, next) => {
     }
 
     const notification = await Notification.create(notificationData);
+
+    // Send push notification via FCM
+    try {
+      if (userId) {
+        // Find specific user's FCM token
+        const targetUser = await User.findById(userId);
+        if (targetUser && targetUser.fcmToken) {
+          await messaging().send({
+            token: targetUser.fcmToken,
+            notification: {
+              title,
+              body: message,
+              ...(image && { imageUrl: image })
+            },
+          });
+        }
+      } else {
+        // Send global notification via topic or find all users with fcmToken
+        // Alternatively, if you want to use a topic, you would subscribe users to 'all' topic on login
+        // For simplicity, assuming a topic 'all' is used for global notifications.
+        await messaging().send({
+          topic: 'all',
+          notification: {
+            title,
+            body: message,
+            ...(image && { imageUrl: image })
+          },
+        });
+      }
+    } catch (fcmError) {
+      console.error('Error sending FCM push notification:', fcmError);
+      // We don't fail the API if FCM fails
+    }
+
     res.status(201).json({ success: true, notification });
   } catch (error) {
     next(error);
