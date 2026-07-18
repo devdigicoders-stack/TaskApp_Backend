@@ -49,7 +49,7 @@ exports.markAsRead = async (req, res, next) => {
 // @access  Private/Admin
 exports.createNotification = async (req, res, next) => {
   try {
-    const { title, message, userId } = req.body;
+    const { title, message, userId, image } = req.body;
     
     if (!title || !message) {
       return res.status(400).json({ success: false, message: 'Please provide title and message' });
@@ -58,6 +58,9 @@ exports.createNotification = async (req, res, next) => {
     const notificationData = { title, message };
     if (userId) {
       notificationData.userId = userId;
+    }
+    if (image) {
+      notificationData.image = image;
     }
 
     const notification = await Notification.create(notificationData);

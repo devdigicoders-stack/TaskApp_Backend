@@ -15,6 +15,10 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a message'],
   },
+  image: {
+    type: String, // Can be base64 string or URL
+    default: '',
+  },
   isRead: {
     type: Boolean,
     default: false,
