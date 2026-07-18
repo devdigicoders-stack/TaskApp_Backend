@@ -5,7 +5,7 @@ const {
   updateGift,
   deleteGift,
 } = require('../controllers/gift.controller');
-const { protect, authorize } = require('../middlewares/auth');
+const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
