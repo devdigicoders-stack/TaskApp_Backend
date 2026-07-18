@@ -66,6 +66,9 @@ exports.createNotification = async (req, res, next) => {
 
     const notification = await Notification.create(notificationData);
 
+    let fcmStatus = 'sent';
+    let fcmErrorMessage = null;
+
     // Send push notification via FCM
     try {
       if (userId) {
@@ -80,11 +83,10 @@ exports.createNotification = async (req, res, next) => {
               ...(image && { imageUrl: image })
             },
           });
+        } else {
+          fcmStatus = 'no_token';
         }
       } else {
-        // Send global notification via topic or find all users with fcmToken
-        // Alternatively, if you want to use a topic, you would subscribe users to 'all' topic on login
-        // For simplicity, assuming a topic 'all' is used for global notifications.
         await messaging().send({
           topic: 'all',
           notification: {
@@ -96,10 +98,11 @@ exports.createNotification = async (req, res, next) => {
       }
     } catch (fcmError) {
       console.error('Error sending FCM push notification:', fcmError);
-      // We don't fail the API if FCM fails
+      fcmStatus = 'failed';
+      fcmErrorMessage = fcmError.message;
     }
 
-    res.status(201).json({ success: true, notification });
+    res.status(201).json({ success: true, notification, fcmStatus, fcmErrorMessage });
   } catch (error) {
     next(error);
   }
