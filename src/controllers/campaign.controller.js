@@ -1,6 +1,7 @@
 const CampaignTask = require('../models/CampaignTask');
 const User = require('../models/User');
 const TaskSubmission = require('../models/TaskSubmission');
+const Notification = require('../models/Notification');
 
 // ─────────────────────────────────────────────────────────────
 // @desc    Get all campaign tasks (admin sees all, users see active only)
@@ -78,6 +79,13 @@ exports.createCampaign = async (req, res, next) => {
     obj.completionsCount = 0;
     obj.userCompleted = false;
     obj.isExpired = campaign.isExpired();
+
+    // Create global notification for new campaign
+    await Notification.create({
+      title: 'New Offer Available! 🎉',
+      message: `A new task "${campaign.title}" is available. Complete it to earn ${campaign.coinsReward} coins!`,
+      userId: null, // Global broadcast
+    });
 
     res.status(201).json({ success: true, campaign: obj });
   } catch (error) {

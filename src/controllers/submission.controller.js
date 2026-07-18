@@ -1,6 +1,7 @@
 const TaskSubmission = require('../models/TaskSubmission');
 const CampaignTask = require('../models/CampaignTask');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 // @desc    Start a task (user clicks "Start Task")
 // @route   POST /api/submissions/start/:campaignId
@@ -124,6 +125,20 @@ exports.resolveSubmission = async (req, res, next) => {
       // Also add to campaign's completedBy for backward compat
       await CampaignTask.findByIdAndUpdate(submission.campaign._id, {
         $addToSet: { completedBy: { user: submission.user, completedAt: new Date() } },
+      });
+
+      // Notify User
+      await Notification.create({
+        userId: submission.user,
+        title: 'Task Approved! 💰',
+        message: `Your submission for "${submission.campaign.title}" has been approved. You earned ${coinsReward} coins!`,
+      });
+    } else if (status === 'rejected') {
+      // Notify User
+      await Notification.create({
+        userId: submission.user,
+        title: 'Task Rejected ❌',
+        message: `Your submission for "${submission.campaign.title}" was rejected. ${adminNote ? 'Reason: ' + adminNote : ''}`,
       });
     }
 
