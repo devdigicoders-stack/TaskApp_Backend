@@ -36,6 +36,8 @@ app.use('/api/withdrawals', require('./routes/withdrawal.routes'));
 app.use('/api/submissions', require('./routes/submission.routes'));
 app.use('/api/settings', require('./routes/settings.routes'));
 app.use('/api/notifications', require('./routes/notification.routes'));
+app.use('/api/gifts', require('./routes/gift.routes'));
+app.use('/api/redemptions', require('./routes/redemption.routes'));
 
 // Health check
 app.get('/api/health', (req, res) => {
