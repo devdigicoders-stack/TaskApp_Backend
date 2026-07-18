@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['admin', 'manager', 'user'],
+      enum: ['admin', 'manager', 'user', 'merchant'],
       default: 'user',
     },
     avatar: {
@@ -60,6 +60,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
       trim: true,
+    },
+    // Merchant specific fields
+    shopName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    merchantQrId: {
+      type: String,
+      default: '',
     },
   },
   { timestamps: true }
