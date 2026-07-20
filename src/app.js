@@ -40,6 +40,7 @@ app.use('/api/gifts', require('./routes/gift.routes'));
 app.use('/api/redemptions', require('./routes/redemption.routes'));
 app.use('/api/merchants', require('./routes/merchant.routes'));
 app.use('/api/payments', require('./routes/payment.routes'));
+app.use('/api/transactions', require('./routes/transaction.routes'));
 
 // Health check
 app.get('/api/health', (req, res) => {

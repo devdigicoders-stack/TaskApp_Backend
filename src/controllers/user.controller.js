@@ -1,4 +1,7 @@
 const User = require('../models/User');
+const Transaction = require('../models/Transaction');
+const Notification = require('../models/Notification');
+const { messaging } = require('../config/firebase');
 
 // @desc    Update own profile (upiId, upiQrCode, name)
 // @route   PUT /api/users/profile
@@ -77,6 +80,54 @@ exports.deleteUser = async (req, res, next) => {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     res.json({ success: true, message: 'User deleted' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Adjust user coins (admin only)
+// @route   POST /api/users/:id/adjust-coins
+exports.adjustCoins = async (req, res, next) => {
+  try {
+    const { amount, note } = req.body;
+    if (typeof amount !== 'number' || amount === 0) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid non-zero amount' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    user.coins = Math.max(0, user.coins + amount);
+    await user.save();
+
+    await Transaction.create({
+      user: user._id,
+      amount,
+      type: 'admin_adjustment',
+      description: note || (amount > 0 ? 'Admin added coins' : 'Admin deducted coins')
+    });
+
+    const title = amount > 0 ? 'Coins Added! 💰' : 'Coins Deducted';
+    const message = note || `Admin has ${amount > 0 ? 'added' : 'deducted'} ${Math.abs(amount)} coins to your account.`;
+    
+    await Notification.create({
+      userId: user._id,
+      title,
+      message,
+    });
+
+    if (user.fcmToken) {
+      try {
+        await messaging().send({
+          token: user.fcmToken,
+          notification: { title, body: message },
+        });
+      } catch (fcmError) {
+        console.error('Error sending FCM push notification in adjustCoins:', fcmError);
+      }
+    }
+
+    res.json({ success: true, user });
   } catch (error) {
     next(error);
   }
