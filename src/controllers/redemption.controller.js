@@ -10,7 +10,8 @@ const { messaging } = require('../config/firebase');
 // @access  Private
 exports.getRedemptions = async (req, res, next) => {
   try {
-    const filter = req.user.role === 'admin' ? {} : { user: req.user._id };
+    const isAdminOrMerchant = ['admin', 'manager', 'merchant'].includes(req.user.role);
+    const filter = isAdminOrMerchant ? {} : { user: req.user._id };
     const redemptions = await Redemption.find(filter)
       .populate('user', 'name email mobileNumber')
       .populate('gift', 'name image requiredCoins')
@@ -108,24 +109,35 @@ exports.updateRedemptionStatus = async (req, res, next) => {
     await redemption.save();
 
     // Send notification to user
-    const title = status === 'approved' ? 'Gift Redeemed!' : 'Redemption Rejected';
+    const title = status === 'approved' ? 'Gift Redeemed! 🎁' : 'Redemption Rejected ❌';
     const message = status === 'approved'
-      ? `Your request for ${redemption.gift.name} has been approved.`
-      : `Your request for ${redemption.gift.name} was rejected. ${adminNote ? 'Reason: ' + adminNote : ''} Coins refunded.`;
+      ? `Your request for "${redemption.gift.name}" has been approved. Enjoy your gift!`
+      : `Your request for "${redemption.gift.name}" was rejected. ${adminNote ? 'Reason: ' + adminNote : ''} Coins refunded.`;
+
+    // Only use imageUrl in FCM if it's a real URL (not base64)
+    const giftImage = redemption.gift.image || '';
+    const isUrl = giftImage.startsWith('http://') || giftImage.startsWith('https://');
 
     await Notification.create({
+      userId: redemption.user._id,
       title,
       message,
-      userId: redemption.user._id,
-      image: redemption.gift.image,
+      image: isUrl ? giftImage : '',
     });
 
     if (redemption.user.fcmToken) {
       try {
-        await messaging().send({
+        const fcmPayload = {
           token: redemption.user.fcmToken,
-          notification: { title, body: message, imageUrl: redemption.gift.image || undefined },
-        });
+          notification: {
+            title,
+            body: message,
+            ...(isUrl && { imageUrl: giftImage }),
+          },
+          android: { priority: 'high' },
+          apns: { payload: { aps: { sound: 'default' } } },
+        };
+        await messaging().send(fcmPayload);
       } catch (fcmErr) {
         console.error('FCM Error on redemption:', fcmErr.message);
       }

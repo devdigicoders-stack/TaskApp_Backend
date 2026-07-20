@@ -17,6 +17,6 @@ router
 
 router
   .route('/:id')
-  .put(authorize('admin', 'manager'), updateRedemptionStatus);
+  .put(authorize('admin', 'manager', 'merchant'), updateRedemptionStatus);
 
 module.exports = router;
