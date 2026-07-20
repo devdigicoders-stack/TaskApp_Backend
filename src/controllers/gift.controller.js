@@ -1,12 +1,39 @@
 const Gift = require('../models/Gift');
+const Redemption = require('../models/Redemption');
 
-// @desc    Get all active gifts
+// @desc    Get all active gifts (with user's redemption count attached)
 // @route   GET /api/gifts
 // @access  Private (Any authenticated user)
 exports.getGifts = async (req, res, next) => {
   try {
-    const filter = req.user.role === 'admin' ? {} : { isActive: true };
+    const isAdmin = ['admin', 'manager'].includes(req.user.role);
+    const filter = isAdmin ? {} : { isActive: true };
     const gifts = await Gift.find(filter).sort('-createdAt');
+
+    // For regular users, attach how many times they have redeemed each gift
+    // (only count non-rejected redemptions)
+    if (!isAdmin) {
+      const userId = req.user._id;
+      const userRedemptions = await Redemption.find({
+        user: userId,
+        status: { $ne: 'rejected' },
+      }).select('gift');
+
+      // Build a map: giftId -> count
+      const countMap = {};
+      for (const r of userRedemptions) {
+        const gid = r.gift.toString();
+        countMap[gid] = (countMap[gid] || 0) + 1;
+      }
+
+      const giftsWithCount = gifts.map((g) => ({
+        ...g.toObject(),
+        userRedemptionCount: countMap[g._id.toString()] || 0,
+      }));
+
+      return res.json({ success: true, count: giftsWithCount.length, gifts: giftsWithCount });
+    }
+
     res.json({ success: true, count: gifts.length, gifts });
   } catch (error) {
     next(error);

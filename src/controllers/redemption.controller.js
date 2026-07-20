@@ -40,6 +40,21 @@ exports.createRedemption = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Not enough coins to redeem this gift' });
     }
 
+    // Check per-user redemption limit (0 = unlimited)
+    if (gift.maxRedemptionsPerUser > 0) {
+      const userRedemptionCount = await Redemption.countDocuments({
+        user: req.user._id,
+        gift: giftId,
+        status: { $ne: 'rejected' },
+      });
+      if (userRedemptionCount >= gift.maxRedemptionsPerUser) {
+        return res.status(400).json({
+          success: false,
+          message: `You have already redeemed this gift ${gift.maxRedemptionsPerUser} time(s). Maximum limit reached.`,
+        });
+      }
+    }
+
     // Deduct coins immediately
     user.coins -= gift.requiredCoins;
     await user.save();

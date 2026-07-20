@@ -24,6 +24,12 @@ const giftSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // 0 = unlimited, any positive number = max times a single user can redeem
+    maxRedemptionsPerUser: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true }
 );
