@@ -2,6 +2,7 @@ const TaskSubmission = require('../models/TaskSubmission');
 const CampaignTask = require('../models/CampaignTask');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const { messaging } = require('../config/firebase');
 
 // @desc    Start a task (user clicks "Start Task")
 // @route   POST /api/submissions/start/:campaignId
@@ -128,18 +129,38 @@ exports.resolveSubmission = async (req, res, next) => {
       });
 
       // Notify User
-      await Notification.create({
-        userId: submission.user,
-        title: 'Task Approved! 💰',
-        message: `Your submission for "${submission.campaign.title}" has been approved. You earned ${coinsReward} coins!`,
-      });
+      const title = 'Task Approved! 💰';
+      const message = `Your submission for "${submission.campaign.title}" has been approved. You earned ${coinsReward} coins!`;
+      await Notification.create({ userId: submission.user, title, message });
+
+      try {
+        const targetUser = await User.findById(submission.user);
+        if (targetUser && targetUser.fcmToken) {
+          await messaging().send({
+            token: targetUser.fcmToken,
+            notification: { title, body: message },
+          });
+        }
+      } catch (fcmError) {
+        console.error('Error sending FCM push notification:', fcmError);
+      }
     } else if (status === 'rejected') {
       // Notify User
-      await Notification.create({
-        userId: submission.user,
-        title: 'Task Rejected ❌',
-        message: `Your submission for "${submission.campaign.title}" was rejected. ${adminNote ? 'Reason: ' + adminNote : ''}`,
-      });
+      const title = 'Task Rejected ❌';
+      const message = `Your submission for "${submission.campaign.title}" was rejected. ${adminNote ? 'Reason: ' + adminNote : ''}`;
+      await Notification.create({ userId: submission.user, title, message });
+
+      try {
+        const targetUser = await User.findById(submission.user);
+        if (targetUser && targetUser.fcmToken) {
+          await messaging().send({
+            token: targetUser.fcmToken,
+            notification: { title, body: message },
+          });
+        }
+      } catch (fcmError) {
+        console.error('Error sending FCM push notification:', fcmError);
+      }
     }
 
     await submission.save();
