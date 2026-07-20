@@ -2,6 +2,7 @@ const Redemption = require('../models/Redemption');
 const Gift = require('../models/Gift');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const Transaction = require('../models/Transaction');
 const { messaging } = require('../config/firebase');
 
 // @desc    Get user redemptions
@@ -48,6 +49,14 @@ exports.createRedemption = async (req, res, next) => {
       status: 'pending',
     });
 
+    // Record transaction in user's history (debit)
+    await Transaction.create({
+      user: req.user._id,
+      amount: -gift.requiredCoins,
+      type: 'gift_redemption',
+      description: `Redeemed gift: ${gift.name}`,
+    });
+
     res.status(201).json({ success: true, redemption, remainingCoins: user.coins });
   } catch (error) {
     next(error);
@@ -86,6 +95,14 @@ exports.updateRedemptionStatus = async (req, res, next) => {
     if (status === 'rejected') {
       redemption.user.coins += redemption.gift.requiredCoins;
       await redemption.user.save();
+
+      // Record refund transaction in user's history
+      await Transaction.create({
+        user: redemption.user._id,
+        amount: redemption.gift.requiredCoins,
+        type: 'gift_redemption_refund',
+        description: `Refund for rejected redemption of ${redemption.gift.name}`,
+      });
     }
 
     await redemption.save();

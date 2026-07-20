@@ -2,6 +2,7 @@ const TaskSubmission = require('../models/TaskSubmission');
 const CampaignTask = require('../models/CampaignTask');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const Transaction = require('../models/Transaction');
 const { messaging } = require('../config/firebase');
 
 // @desc    Start a task (user clicks "Start Task")
@@ -122,6 +123,14 @@ exports.resolveSubmission = async (req, res, next) => {
 
       // Credit coins to user
       await User.findByIdAndUpdate(submission.user, { $inc: { coins: coinsReward } });
+
+      // Record transaction in user's history
+      await Transaction.create({
+        user: submission.user,
+        amount: coinsReward,
+        type: 'task_reward',
+        description: `Reward for task: ${submission.campaign.title}`,
+      });
 
       // Also add to campaign's completedBy for backward compat
       await CampaignTask.findByIdAndUpdate(submission.campaign._id, {

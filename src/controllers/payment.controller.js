@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const MerchantPayment = require('../models/MerchantPayment');
+const Transaction = require('../models/Transaction');
 
 // Get Merchant details by QR ID
 exports.getMerchantByQr = async (req, res) => {
@@ -56,6 +57,14 @@ exports.payMerchant = async (req, res) => {
       merchant: merchant._id,
       coinsAmount,
       status: 'completed',
+    });
+
+    // Record transaction for user's history
+    await Transaction.create({
+      user: userId,
+      amount: -coinsAmount,
+      type: 'coin_pay',
+      description: `Paid to ${merchant.shopName || merchant.name}`,
     });
 
     res.status(200).json({

@@ -1,6 +1,7 @@
 const Withdrawal = require('../models/Withdrawal');
 const User = require('../models/User');
 const Settings = require('../models/Settings');
+const Transaction = require('../models/Transaction');
 
 // @desc    Create withdrawal request (user)
 // @route   POST /api/withdrawals
@@ -49,6 +50,14 @@ exports.createWithdrawal = async (req, res, next) => {
       inrAmount,
       upiId: user.upiId,
       upiQrCode: user.upiQrCode,
+    });
+
+    // Record transaction in user's history (debit)
+    await Transaction.create({
+      user: user._id,
+      amount: -coins,
+      type: 'withdrawal',
+      description: 'Withdrawal request submitted',
     });
 
     res.status(201).json({
@@ -114,6 +123,14 @@ exports.resolveWithdrawal = async (req, res, next) => {
     if (status === 'rejected') {
       await User.findByIdAndUpdate(withdrawal.user._id, {
         $inc: { coins: withdrawal.coinsAmount },
+      });
+
+      // Record refund transaction in user's history
+      await Transaction.create({
+        user: withdrawal.user._id,
+        amount: withdrawal.coinsAmount,
+        type: 'withdrawal_refund',
+        description: 'Refund for rejected withdrawal request',
       });
     }
 

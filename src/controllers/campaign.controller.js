@@ -2,6 +2,8 @@ const CampaignTask = require('../models/CampaignTask');
 const User = require('../models/User');
 const TaskSubmission = require('../models/TaskSubmission');
 const Notification = require('../models/Notification');
+const Transaction = require('../models/Transaction');
+const { messaging } = require('../config/firebase');
 
 // ─────────────────────────────────────────────────────────────
 // @desc    Get all campaign tasks (admin sees all, users see active only)
@@ -177,6 +179,14 @@ exports.completeTask = async (req, res, next) => {
       { $inc: { coins: campaign.coinsReward } },
       { new: true }
     ).select('name email coins');
+
+    // Record transaction in user's history
+    await Transaction.create({
+      user: req.user._id,
+      amount: campaign.coinsReward,
+      type: 'task_reward',
+      description: `Completed task: ${campaign.title}`,
+    });
 
     res.json({
       success: true,
