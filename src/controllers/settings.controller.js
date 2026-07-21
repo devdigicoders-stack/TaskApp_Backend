@@ -17,7 +17,11 @@ exports.getPublicSettings = async (req, res, next) => {
   try {
     const coinsPerInr = await Settings.get('coins_per_inr', 100);
     const minWithdrawalCoins = await Settings.get('min_withdrawal_coins', 100);
-    res.json({ success: true, coinsPerInr, minWithdrawalCoins });
+    const whatsappNumber = await Settings.get('whatsapp_number', '');
+    let showWithdrawButton = await Settings.get('show_withdraw_button', true);
+    if (showWithdrawButton === 'false') showWithdrawButton = false;
+    if (showWithdrawButton === 'true') showWithdrawButton = true;
+    res.json({ success: true, coinsPerInr, minWithdrawalCoins, whatsappNumber, showWithdrawButton });
   } catch (error) {
     next(error);
   }
