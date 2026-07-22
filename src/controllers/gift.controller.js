@@ -8,7 +8,7 @@ exports.getGifts = async (req, res, next) => {
   try {
     const isAdmin = ['admin', 'manager'].includes(req.user.role);
     const filter = isAdmin ? {} : { isActive: true };
-    const gifts = await Gift.find(filter).populate('merchant', 'name shopName email merchantQrId').sort('-createdAt');
+    const gifts = await Gift.find(filter).populate('merchant', 'name shopName email merchantQrId address addressLink').sort('-createdAt');
 
     // For regular users, attach how many times they have redeemed each gift
     // (only count non-rejected redemptions)
@@ -46,7 +46,7 @@ exports.getGifts = async (req, res, next) => {
 exports.createGift = async (req, res, next) => {
   try {
     const gift = await Gift.create(req.body);
-    await gift.populate('merchant', 'name shopName email merchantQrId');
+    await gift.populate('merchant', 'name shopName email merchantQrId address addressLink');
     res.status(201).json({ success: true, gift });
   } catch (error) {
     next(error);
@@ -61,7 +61,7 @@ exports.updateGift = async (req, res, next) => {
     const gift = await Gift.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    }).populate('merchant', 'name shopName email merchantQrId');
+    }).populate('merchant', 'name shopName email merchantQrId address addressLink');
     if (!gift) return res.status(404).json({ success: false, message: 'Gift not found' });
     res.json({ success: true, gift });
   } catch (error) {

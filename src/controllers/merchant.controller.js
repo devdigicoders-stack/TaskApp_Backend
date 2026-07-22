@@ -15,7 +15,7 @@ exports.getMerchants = async (req, res) => {
 // Admin only: Create a merchant
 exports.createMerchant = async (req, res) => {
   try {
-    const { name, email, password, shopName } = req.body;
+    const { name, email, password, shopName, address, addressLink } = req.body;
     
     // Check if email exists
     const userExists = await User.findOne({ email });
@@ -32,6 +32,8 @@ exports.createMerchant = async (req, res) => {
       password,
       role: 'merchant',
       shopName,
+      address: address || '',
+      addressLink: addressLink || '',
       merchantQrId,
     });
 
@@ -49,11 +51,13 @@ exports.updateMerchant = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Merchant not found' });
     }
 
-    const { name, email, shopName, isActive, password } = req.body;
+    const { name, email, shopName, address, addressLink, isActive, password } = req.body;
     
     if (name) merchant.name = name;
     if (email) merchant.email = email;
-    if (shopName) merchant.shopName = shopName;
+    if (shopName !== undefined) merchant.shopName = shopName;
+    if (address !== undefined) merchant.address = address;
+    if (addressLink !== undefined) merchant.addressLink = addressLink;
     if (isActive !== undefined) merchant.isActive = isActive;
     if (password) merchant.password = password;
 

@@ -67,6 +67,16 @@ const userSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    address: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    addressLink: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     merchantQrId: {
       type: String,
       default: '',
