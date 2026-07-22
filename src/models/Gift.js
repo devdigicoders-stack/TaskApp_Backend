@@ -30,6 +30,11 @@ const giftSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    merchant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Assigned merchant is required'],
+    },
   },
   { timestamps: true }
 );

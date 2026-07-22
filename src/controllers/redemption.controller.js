@@ -10,11 +10,27 @@ const { messaging } = require('../config/firebase');
 // @access  Private
 exports.getRedemptions = async (req, res, next) => {
   try {
-    const isAdminOrMerchant = ['admin', 'manager', 'merchant'].includes(req.user.role);
-    const filter = isAdminOrMerchant ? {} : { user: req.user._id };
+    let filter = {};
+    if (req.user.role === 'merchant') {
+      const merchantGiftIds = await Gift.find({ merchant: req.user._id }).distinct('_id');
+      filter = {
+        $or: [
+          { merchant: req.user._id },
+          { gift: { $in: merchantGiftIds } },
+        ],
+      };
+    } else if (!['admin', 'manager'].includes(req.user.role)) {
+      filter = { user: req.user._id };
+    }
+
     const redemptions = await Redemption.find(filter)
       .populate('user', 'name email mobileNumber')
-      .populate('gift', 'name image requiredCoins')
+      .populate({
+        path: 'gift',
+        select: 'name image requiredCoins merchant',
+        populate: { path: 'merchant', select: 'name shopName email' },
+      })
+      .populate('merchant', 'name shopName email')
       .sort('-createdAt');
     res.json({ success: true, count: redemptions.length, redemptions });
   } catch (error) {
@@ -62,6 +78,7 @@ exports.createRedemption = async (req, res, next) => {
     const redemption = await Redemption.create({
       user: req.user._id,
       gift: giftId,
+      merchant: gift.merchant || null,
       status: 'pending',
     });
 
@@ -96,6 +113,15 @@ exports.updateRedemptionStatus = async (req, res, next) => {
 
     if (!redemption) {
       return res.status(404).json({ success: false, message: 'Redemption request not found' });
+    }
+
+    if (req.user.role === 'merchant') {
+      const isAssigned =
+        (redemption.merchant && redemption.merchant.toString() === req.user._id.toString()) ||
+        (redemption.gift && redemption.gift.merchant && redemption.gift.merchant.toString() === req.user._id.toString());
+      if (!isAssigned) {
+        return res.status(403).json({ success: false, message: 'You are not authorized to update this redemption' });
+      }
     }
 
     if (redemption.status !== 'pending') {
